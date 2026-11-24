@@ -1,7 +1,7 @@
 package com.incidentlab.notification.listener;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import com.incidentlab.notification.service.NotificationService;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;

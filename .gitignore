@@ -7,3 +7,7 @@ runs/
 
 # local backups (e.g. lgtm telemetry tarballs)
 backups/
+
+# personal study notes (not part of the project)
+docs/diagnosis-agent-guide.pdf
+docs/diagnosis-agent-guide-spring-ai.pdf

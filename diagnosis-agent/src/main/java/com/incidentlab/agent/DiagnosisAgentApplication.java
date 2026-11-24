@@ -1,26 +1,37 @@
 package com.incidentlab.agent;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 /**
- * Week 2 (Nov 29 - Dec 5): the diagnosis agent.
- *
- * <p>TODO:
- * <ul>
- *   <li>{@code ObservabilityTools} with Spring AI {@code @Tool} methods:
- *       searchErrorLogs (Loki), getTrace (Tempo), queryMetric (Prometheus),
- *       listRecentChanges (Loki, logger "deployments").</li>
- *   <li>Filter out {@code /admin/faults} spans and logs so ground truth never leaks.</li>
- *   <li>Use a {@code ChatClient} with a system prompt that asks for a ranked list of
- *       root causes, each citing its evidence, as structured output.</li>
- *   <li>A CLI entry point: {@code diagnose --since 10m --symptom "orders failing"}.</li>
- * </ul>
+ * Command-line incident diagnosis agent: an LLM behind Spring AI's ChatModel (Claude, or a local
+ * model via Ollama) investigates the lab through read-only tools over Loki, Tempo and Prometheus,
+ * then submits ranked root causes with evidence. See {@code cli.DiagnoseCommand} for usage.
  */
 @SpringBootApplication
 public class DiagnosisAgentApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(DiagnosisAgentApplication.class, args);
+        System.exit(SpringApplication.exit(SpringApplication.run(DiagnosisAgentApplication.class, withProvider(args))));
+    }
+
+    /**
+     * Turns {@code --provider X} into {@code --spring.ai.model.chat=X}: Spring AI decides which
+     * ChatModel to create while the application starts, before the command line is interpreted.
+     */
+    static String[] withProvider(String[] args) {
+        List<String> out = new ArrayList<>();
+        for (int i = 0; i < args.length; i++) {
+            if (args[i].startsWith("--provider=")) {
+                out.add("--spring.ai.model.chat=" + args[i].substring("--provider=".length()));
+            } else if (args[i].equals("--provider") && i + 1 < args.length) {
+                out.add("--spring.ai.model.chat=" + args[++i]);
+            } else {
+                out.add(args[i]);
+            }
+        }
+        return out.toArray(String[]::new);
     }
 }

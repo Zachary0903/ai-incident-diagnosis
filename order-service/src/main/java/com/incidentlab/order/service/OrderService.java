@@ -1,7 +1,6 @@
 package com.incidentlab.order.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.incidentlab.order.client.InventoryClient;
 import com.incidentlab.order.dto.CreateOrderRequest;
 import com.incidentlab.order.dto.OrderResponse;
@@ -64,11 +63,8 @@ public class OrderService {
         return response;
     }
 
+    /** Jackson 3 exceptions are unchecked; a serialization failure fails the request. */
     private String toJson(OrderResponse response) {
-        try {
-            return mapper.writeValueAsString(response);
-        } catch (JsonProcessingException e) {
-            throw new IllegalStateException("Could not serialize order event", e);
-        }
+        return mapper.writeValueAsString(response);
     }
 }
