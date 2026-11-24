@@ -1,0 +1,34 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: order-service
+  datasource:
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:3306/orders
+    username: ${MYSQL_USER:app}
+    password: ${MYSQL_PASSWORD:app}
+    hikari:
+      maximum-pool-size: 10
+      connection-timeout: 3000      # fail fast when the pool is exhausted (F02)
+      leak-detection-threshold: 10000
+  jpa:
+    open-in-view: false               # don't hold a connection for the whole HTTP request
+    hibernate:
+      ddl-auto: none                # schema is owned by infra/mysql/init.sql
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP:localhost:29092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+inventory:
+  base-url: ${INVENTORY_URL:http://localhost:8082}
+  connect-timeout-ms: 1000
+  read-timeout-ms: 2000             # F05 pushes inventory latency past this
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

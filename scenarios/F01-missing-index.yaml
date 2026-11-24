@@ -1,0 +1,25 @@
+id: F01
+title: Slow reservations after index removed by a migration
+service: inventory-service
+fault: missing-index
+category: database
+root_cause: >
+  Index idx_sku on inventory.stock_movement was dropped, so the per-SKU velocity
+  check (StockMovementRepository.countBySku, which Hibernate runs as
+  "select count(sm1_0.id) from stock_movement sm1_0 where sm1_0.sku=?") does a full scan of ~2M rows.
+trigger:
+  - scripts/fault.sh inventory missing-index on "Applied migration V12__cleanup_unused_indexes"
+recover:
+  - scripts/fault.sh inventory missing-index off
+recover_notes: >
+  Recovery rebuilds idx_sku (CREATE INDEX on ~2M rows) while reservations keep inserting
+  into stock_movement. In the 2026-11-23 run this caused a few MySQL deadlocks within
+  ~3 s of "off" (SQL Error 1213 -> CannotAcquireLockException -> inventory 500 ->
+  order-service "Inventory returned 500"). This is a side effect of the recovery, not
+  the fault: end the diagnosis window before running recover, or ignore ~1 min after it.
+cover_story_change: "Applied migration V12__cleanup_unused_indexes"
+expected_evidence:
+  - Tempo: long JDBC spans for the stock_movement count query inside POST /inventory/reserve
+  - order-service p95 latency up; possible 503 "Inventory call failed" read timeouts under load
+  - Loki: deployments log line about migration V12 shortly before onset
+red_herrings: []

@@ -1,0 +1,8 @@
+**/target
+.git
+.idea
+*.iml
+docs
+scenarios
+scripts
+infra

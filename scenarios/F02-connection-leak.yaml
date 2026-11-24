@@ -1,0 +1,20 @@
+id: F02
+title: Order API fails with connection pool exhaustion
+service: order-service
+fault: connection-leak
+category: resource-leak
+root_cause: >
+  OrderAuditService's batched audit path opens its own JPA EntityManager and never closes it,
+  so Hibernate never returns the JDBC connection it holds,
+  draining the 10-connection Hikari pool within seconds.
+trigger:
+  - scripts/fault.sh order connection-leak on "Enabled feature flag audit.batch-mode=true"
+recover:
+  - scripts/fault.sh order connection-leak off
+  - docker compose restart order-service   # leaked connections are only freed on restart
+cover_story_change: "Enabled feature flag audit.batch-mode=true"
+expected_evidence:
+  - Loki: HikariPool "Connection is not available, request timed out after 3000ms"
+  - Loki: Hikari "Apparent connection leak detected" warnings with a stack trace in OrderAuditService
+  - order-service 500s on every request after the pool drains; inventory-service healthy
+red_herrings: []

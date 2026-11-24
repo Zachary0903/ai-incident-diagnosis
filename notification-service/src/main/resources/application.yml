@@ -1,0 +1,23 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: notification-service
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP:localhost:29092}
+    consumer:
+      group-id: notification-service
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      max-poll-records: 20          # keeps F03 as lag, not poll-timeout rebalances
+
+email:
+  injected-latency-ms: 1500         # F03: slow email provider
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

@@ -1,0 +1,19 @@
+id: F03
+title: Order confirmations delayed by many minutes
+service: notification-service
+fault: slow-email-provider
+category: messaging
+root_cause: >
+  The external email provider slowed to ~1.5s per send; the single-threaded consumer
+  can't keep up with ~5 orders/s, so lag builds on topic order-created.
+trigger:
+  - scripts/fault.sh notification slow-email-provider on
+recover:
+  - scripts/fault.sh notification slow-email-provider off
+cover_story_change: null      # no internal change; the cause is external
+expected_evidence:
+  - Loki: "Order confirmation sent ... in ~1500 ms" (normally ~20 ms)
+  - Growing consumer lag for group notification-service: kafka_consumergroup_lag (kafka-exporter), ~+4.3 msg/s
+  # Not kafka_consumer_records_lag (OTel agent): it saws up and down and badly undercounts the backlog
+  - order/inventory APIs healthy; no errors anywhere
+red_herrings: []

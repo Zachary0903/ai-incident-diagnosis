@@ -1,0 +1,37 @@
+# Replaces /otel-lgtm/loki-config.yaml in grafana/otel-lgtm:0.8.1 (Loki 3.3.1).
+# Copied unchanged from the image except for the two grpc_server_* limits under `server`.
+
+auth_enabled: false
+
+server:
+  http_listen_port: 3100
+  # Loki's query frontend and querier exchange results over internal gRPC, capped at 4 MiB by
+  # default. Java error logs carry the full stack trace in exception_stacktrace (~10 KB each), so
+  # Grafana's default 1000-line query hits the cap and hangs until the client times out
+  # ("timeout awaiting response headers"). The querier's client side already allows 100 MiB.
+  grpc_server_max_recv_msg_size: 67108864   # 64 MiB
+  grpc_server_max_send_msg_size: 67108864   # 64 MiB
+
+common:
+  path_prefix: /data/loki
+  storage:
+    filesystem:
+      chunks_directory: /data/loki/chunks
+      rules_directory: /data/loki/rules
+  replication_factor: 1
+  ring:
+    kvstore:
+      store: inmemory
+
+schema_config:
+  configs:
+    - from: 2020-10-24
+      store: tsdb
+      object_store: filesystem
+      schema: v13
+      index:
+        prefix: index_
+        period: 24h
+
+ruler:
+  alertmanager_url: http://localhost:9093

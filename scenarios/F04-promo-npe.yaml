@@ -1,0 +1,18 @@
+id: F04
+title: Some orders fail with 500 after a pricing deploy
+service: order-service
+fault: promo-npe
+category: code-regression
+root_cause: >
+  Pricing v2 (PricingService.percentOffV2) dereferences the result of lookupPromo without
+  a null check, so any unknown promo code (e.g. BLACKFRIDAY) throws NullPointerException.
+trigger:
+  - scripts/fault.sh order promo-npe on "Deployed order-service 1.8.0 (pricing engine v2)"
+recover:
+  - scripts/fault.sh order promo-npe off
+cover_story_change: "Deployed order-service 1.8.0 (pricing engine v2)"
+expected_evidence:
+  - Loki: NullPointerException with stack frames in PricingService.percentOffV2
+  - ~10% of orders fail (only those with unknown promo codes); the rest succeed
+  - deployments log line for 1.8.0 right before onset
+red_herrings: []

@@ -1,0 +1,18 @@
+id: F05
+title: Orders failing with 503 due to downstream timeouts
+service: inventory-service
+fault: inventory-latency
+category: downstream-latency
+root_cause: >
+  The warehouse API called by inventory-service (WarehouseGateway.confirm) now takes ~3.5s,
+  exceeding order-service's 2s read timeout to inventory-service.
+trigger:
+  - scripts/fault.sh inventory inventory-latency on
+recover:
+  - scripts/fault.sh inventory inventory-latency off
+cover_story_change: null
+expected_evidence:
+  - Loki (order-service): "Inventory call failed: Read timed out" with SocketTimeoutException
+  - Tempo: inventory /inventory/reserve spans ~3.5s while its DB spans stay fast
+  - Note: stock is still decremented because inventory completes after the client gave up
+red_herrings: []
